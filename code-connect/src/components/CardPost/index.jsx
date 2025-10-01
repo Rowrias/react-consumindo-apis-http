@@ -11,8 +11,14 @@ export const CardPost = ({ post }) => {
     const [likes, setLikes] = useState(post.likes)
 
     const handleLikeButton = () => {
+
+        const token = localStorage.getItem('access_token')
+
         fetch(`http://localhost:3000/blog-posts/${post.id}/like`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         })
             .then(response => {
                 if (response.ok) {
