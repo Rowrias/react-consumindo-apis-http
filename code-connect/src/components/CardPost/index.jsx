@@ -1,11 +1,27 @@
-import { Author } from "../Author"
-import { ModalComment } from "../ModalComment"
 import styles from './cardpost.module.css'
 
+import { Author } from "../Author"
+import { ModalComment } from "../ModalComment"
 import { ThumbsUpButton } from "./ThumbsUpButton"
 import { Link } from "react-router"
+import { useState } from 'react'
 
 export const CardPost = ({ post }) => {
+
+    const [likes, setLikes] = useState(post.likes)
+
+    const handleLikeButton = () => {
+        fetch(`http://localhost:3000/blog-posts/${post.id}/like`, {
+            method: 'POST'
+        })
+            .then(response => {
+                if (response.ok) {
+                    setLikes(oldState => oldState + 1)
+                    console.log('incrementar o like')
+                }
+            })
+    }
+
     return (
         <article className={styles.card}>
             <header className={styles.header}>
@@ -24,9 +40,9 @@ export const CardPost = ({ post }) => {
             <footer className={styles.footer}>
                 <div className={styles.actions}>
                     <div className={styles.action}>
-                        <ThumbsUpButton loading={false} />
+                        <ThumbsUpButton loading={false} onClick={handleLikeButton} />
                         <p>
-                            {post.likes}
+                            {likes}
                         </p>
                     </div>
                     <div className={styles.action}>
