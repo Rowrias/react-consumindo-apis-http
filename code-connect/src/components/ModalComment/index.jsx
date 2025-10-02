@@ -8,22 +8,51 @@ import { IconArrowFoward } from "../icons/IconArrowFoward"
 import { Spinner } from "../Spinner"
 import styles from './commentmodal.module.css'
 import { Button } from "../Button"
+import { http } from "../../api"
+import { useAuth } from "../../hooks/useAuth"
 
-export const ModalComment = ({ isEditing }) => {
+export const ModalComment = ({ isEditing, onSuccess, postId, defaultValue = "", commentId }) => {
     const modalRef = useRef(null)
     const [loading, setLoading] = useState(false)
+    const { isAuthenticated } = useAuth()
 
     const onSubmit = async (formData) => {
         const text = formData.get('text')
-
+        const token = localStorage.getItem('access_token')
         if (!text.trim()) return
 
         try {
             setLoading(true)
-            setTimeout(() => {
-                setLoading(false)
-            }, 2000)
-            modalRef.current.closeModal()
+
+            if (isEditing) {
+                http.patch(`/comments/${commentId}`, {
+                    text
+                }, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                    .then((response) => {
+                        modalRef.current.closeModal()
+                        onSuccess(response.data)
+                        setLoading(false)
+                    })
+
+            } else {
+                http.post(`/comments/post/${postId}`, {
+                    text
+                }, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                    .then((response) => {
+                        modalRef.current.closeModal()
+                        onSuccess(response.data)
+                        setLoading(false)
+                    })
+            }
+
         } catch (error) {
             console.error('Erro ao criar/atualizar comentário:', error)
         }
@@ -33,7 +62,7 @@ export const ModalComment = ({ isEditing }) => {
             <Modal ref={modalRef}>
                 <form action={onSubmit}>
                     <Subheading>{isEditing ? 'Editar comentário:' : 'Deixe seu comentário sobre o post:'}</Subheading>
-                    <Textarea required rows={8} name="text" placeholder="Digite aqui..." />
+                    <Textarea required rows={8} name="text" placeholder="Digite aqui..." defaultValue={defaultValue} />
                     <div className={styles.footer}>
                         <Button disabled={loading} type="submit">
                             {loading ? <Spinner /> : <>
@@ -45,6 +74,7 @@ export const ModalComment = ({ isEditing }) => {
             </Modal>
             <IconButton
                 onClick={() => modalRef.current.openModal()}
+                disabled={!isAuthenticated}
             >
                 <IconChat fill={isEditing ? '#000' : '#888888'} />
             </IconButton>

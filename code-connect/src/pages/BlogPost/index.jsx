@@ -8,22 +8,30 @@ import ReactMarkdown from 'react-markdown'
 import { useNavigate, useParams } from "react-router"
 import { useEffect, useState } from "react"
 import { ModalComment } from "../../components/ModalComment"
+import { http } from '../../api'
 
 export const BlogPost = () => {
 
     const { slug } = useParams()
     const [post, setPost] = useState(null)
     const navigate = useNavigate()
+    const [comments, setComments] = useState()
+
+    const handleNewComment = (comment) => {
+        setComments([comment, ...comments])
+    }
 
     useEffect(() => {
-        fetch(`http://localhost:3000/blog-posts/slug/${slug}`)
+        http.get(`blog-posts/slug/${slug}`)
             .then(response => {
-                if (response.status == 404) {
-                    navigate('/not-found')                    
-                }
-                return response.json()
+                setPost(response.data)
+                setComments(response.data.comments)
             })
-            .then(data => setPost(data))
+            .catch(error => {
+                if (error.status == 404) {
+                    navigate('/not-found')
+                }
+            })
     }, [slug, navigate])
 
     if (!post) {
@@ -54,9 +62,9 @@ export const BlogPost = () => {
                             </p>
                         </div>
                         <div className={styles.action}>
-                            <ModalComment />
+                            <ModalComment onSuccess={handleNewComment} postId={post?.id} />
                             <p>
-                                {post.comments.length}
+                                {comments.length}
                             </p>
                         </div>
                     </div>
@@ -69,7 +77,7 @@ export const BlogPost = () => {
                     {post.markdown}
                 </ReactMarkdown>
             </div>
-            <CommentList comments={post.comments} />
+            <CommentList comments={comments} />
         </main>
     )
 }
